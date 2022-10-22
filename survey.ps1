@@ -20,6 +20,7 @@ echo "======================"
 echo "| networking survey  |"
 echo "======================"
 getmac
+get-netadapater |format-list -property name, promiscuousmode
 Get-NetIPConfiguration
 Get-NetIPAddress|format-table
 echo "netstat:"
@@ -39,6 +40,8 @@ echo "| security checks    |"
 echo "======================"
 echo "processes:"
 Get-Process
+echo "loaded DLLs:"
+tasklist /m
 #suss process: Get-Process -Id <process_id> | select name, path, starttime
 # Get-Process -Id <process_id>.Modules <--dlls loaded in
 # Get-WmiObject win32_process | select name, ProcessID, ParentProcessId, commandline
@@ -73,9 +76,11 @@ Get-WmiObject win32_UserAccount -Filter "Name = 'Guest'" | Select-Object __Serve
 echo "======================"
 echo "| persistence checks |"
 echo "======================"
-echo "commonly abused key:"
-Get-Item HKLM:\Software\Windows\CurrentVersion\Run
-#reg query HKCU:\Software\Microsoft\Windows\CurrentVersion\Run
+echo "registry section:"
+Get-Item HKLM:\Software\Microsoft\Windows\CurrentVersion\Run
+Get-Item HKLM:\Software\Microsoft\Windows\CurrentVersion\RunOnce
+reg query HKCU\Software\Microsoft\Windows\CurrentVersion\Run
+reg query HKCU\Software\Microsoft\Windows\CurrentVersion\RunOnce
 echo "winlogon:"
 Get-Item "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Winlogon"
 echo "enumerating users:"
@@ -86,6 +91,15 @@ Foreach ($name in $names) {Get-ChildItem ('c:\Users\' + ($name.' $_.Name ') + '\
 echo "WMI permanent event registration:"
 Get-WMIObject -Namespace root\Subscription -Class __FilterToConsumerBinding
 # if any discovered, use page 281 of windows guide to drill further
+echo "======================"
+echo "| forensic reg keys  |"
+echo "======================"
+echo "AppInit_Dlls:"
+Get-ItemPropertyValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\currentversion\windows' -Name AppInit_Dlls
+echo "most recently edited registry keys:"
+reg query HKCU\Software\Microsoft\Windows\CurrentVersion\Applets\Regedit
+echo "most recently opened files:"
+reg query HKCU\software\microsoft\windows\currentversion\explorer\recentdocs
 echo "final log check; past 60 minutes of logs:"
 Get-ChildItem -Path C:\ -recurse | Where-Object {$_.LastWriteTime -ge (Get-Date).AddMinutes(-60)}
 echo "ending script"
